@@ -51,8 +51,8 @@ def crop_image(image_dir, mask_dir, output_path, size):
 
 if __name__ == "__main__":
 
-    image_dir = "/data/vdd/zhongyuhe/workshop/dataset/human_syn_2/images_padding/"
-    output_path = "/data/vdd/zhongyuhe/workshop/dataset/human_syn_2/images_padding/"
+    image_dir = "./dataset/human_syn_2/images_padding/"
+    output_path = "./dataset/human_syn_2/images_padding/"
     mask_dir = '/data/vdd/zhongyuhe/workshop/dataset/human_syn/segm/'
     size = 512
     crop_image(image_dir, mask_dir, output_path, size)

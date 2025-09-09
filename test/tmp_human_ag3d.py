@@ -58,13 +58,11 @@ def project_scene(mesh, img, cam, color=[255, 0, 0]):
 
 
 if __name__ == "__main__":
-    # root = '/data/qingyao/neuralRendering/mycode/pretrainedModel/EVA3D-main/datasets/DeepFashion/images_padding'
-    # root = '/data/vdd/zhongyuhe/workshop/dataset/human_syn_2/images_padding'
-    # root = '/data/vdd/zhongyuhe/workshop/dataset/motion/A_pose/image_0'
+    
     root = '/data/vdd/zhongyuhe/workshop/dataset/human_base/'
-    # root = '/data/vdd/zhongyuhe/workshop/dataset/human_test_512/images'
+    
     img_paths = sorted(all_file(root))
-    # save_dir = '/data/vdd/zhongyuhe/workshop/dataset/human_test_512/visual'
+    
     save_dir = './tmp_test'
     os.makedirs(save_dir, exist_ok=True)
 
