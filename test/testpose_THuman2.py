@@ -55,8 +55,8 @@ def project_scene(mesh, img, cam, color=[255, 0, 0]):
 
 
 if __name__ == "__main__":
-    # root = '/data/qingyao/neuralRendering/mycode/pretrainedModel/EVA3D-main/datasets/DeepFashion/images_padding'
-    root = '/data/vdb/zhongyuhe/data/THuman2.0_res512/0000'
+    
+    root = './data/THuman2.0_res512/0000'
     img_paths = sorted(all_file(root))
     # save_dir = 'tmp_project_mesh'
     save_dir = 'tmp'
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     # path = 'data/dp_pose_dist.npy'
     # path = 'data/gen_human_full.npy'
-    path = '/data/vdb/zhongyuhe/data/THuman2.0_res512/dataset.json'
+    path = './data/THuman2.0_res512/dataset.json'
     with open(path, 'r') as f:
         smpl_params = json.load(f)
     # print(smpl_params.shape)  # (8037, 111)

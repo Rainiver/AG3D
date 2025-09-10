@@ -7,9 +7,8 @@ import trimesh
 from training.deformers.smplx import SMPL
 import torch
 
-
 def all_file(file_dir):
-    L = []
+    L=[]
     for root, dirs, files in os.walk(file_dir):
         for file in files:
             extend = os.path.splitext(file)[1]
@@ -17,18 +16,19 @@ def all_file(file_dir):
                 L.append(os.path.join(root, file))
     return L
 
-
 def parse_params(data):
     print(data)
     params = {}
-    # params['cam'] = np.array(data[0], dtype=np.float32)
-    params['scale'] = np.array([1], dtype=np.float32)
+    params['cam'] = np.array(data[0], dtype=np.float32)
+    params['scale'] = np.array(data[1][0], dtype=np.float32)
+    # params['scale'] = np.array([0.96], dtype=np.float32)
+    # params['transl'] = (np.array(data[1][1:4], dtype=np.float32)) / 2
+    params['transl'] = np.array(data[1][1:4], dtype=np.float32)
+    params['transl'] = np.array(data[1][1:4], dtype=np.float32)
 
-    params['transl'] = np.array(data['transl'], dtype=np.float32) / 2
-    params['transl'] = np.array([0., 0., 0.], dtype=np.float32)
-    params['global_orient'] = np.array(data['global_orient'], dtype=np.float32)
-    params['body_pose'] = np.array(data['body_pose'], dtype=np.float32)
-    params['betas'] = np.array(data['betas'], dtype=np.float32)
+    params['global_orient'] = np.array(data[1][4:7], dtype=np.float32)
+    params['body_pose'] = np.array(data[1][7:76], dtype=np.float32)
+    params['betas'] = np.array(data[1][76:], dtype=np.float32)
 
     params['body_pose'] = torch.from_numpy(params['body_pose'].reshape(1, 69))
     params['global_orient'] = torch.from_numpy(params['global_orient'].reshape(1, 3))
@@ -38,8 +38,8 @@ def parse_params(data):
 
     return params
 
-
 def project_scene(mesh, img, cam, color=[255, 0, 0]):
+
     # Expand cam attributes
     K, P = cam
     P_inv = np.linalg.inv(P)
@@ -59,59 +59,60 @@ def project_scene(mesh, img, cam, color=[255, 0, 0]):
 
 if __name__ == "__main__":
     
-    root = '/data/vdd/zhongyuhe/workshop/dataset/human_base/'
     
+    root = './dataset/DeepFashion/images'
     img_paths = sorted(all_file(root))
-    
-    save_dir = './tmp_test'
+    save_dir = 'tmp_mesh/human_ag3d_2'
     os.makedirs(save_dir, exist_ok=True)
 
-    # path = '/data/vdd/zhongyuhe/workshop/dataset/human_syn_2/dataset.json'
-    path = './data/data_7.json'
-    # path = '/data/vdd/zhongyuhe/workshop/tools/Multiview-Avatar-main/dataset/dataset.json'
-
+     path = './dataset/DeepFashion/dataset.json'
     with open(path, 'r') as fp:
         dp_pose_dist = json.load(fp)
     # print(dp_pose_dist.shape)  # (8037, 111)
+    
 
     idx = 0
     for file in sorted(os.listdir(root)):
-        # file_name = 'images/' + file
+        file_name = 'images_padding/' + file
         idx = idx + 1
-        file_name = 'img_000001_' + str(idx) + '.png'
         if idx > 7:
             continue
-        params = parse_params(dp_pose_dist[file_name])
+        params = parse_params(dp_pose_dist['labels'][file_name])
+        # params['body_pose'] = np.array(js_pose[f'img_000001_{idx}.png']['body_pose'], dtype=np.float32)
+        # params['body_pose'] = torch.from_numpy(params['body_pose'].reshape(1, 69))
+        if idx == 7:
+            params = parse_params(dp_pose_dist['labels']['images_padding/img_000000_1.png'])
+            params['global_orient'] = np.array(dp_pose_dist['labels'][file_name][1][4:7], dtype=np.float32)
+            params['global_orient'] = torch.from_numpy(params['global_orient'].reshape(1, 3))
 
         for key in params.keys():
             print(key, params[key].shape)
             print(params[key])
 
-        # cam_data = params['cam']
-        # cam2world_matrix = cam_data[:16].reshape(4, 4)
-        # intrinsics = cam_data[16:25].reshape(3, 3)
-        # fx = float(intrinsics[0, 0])
-        # fy = float(intrinsics[1, 1])
-        # cx = float(intrinsics[0, 2])
-        # cy = float(intrinsics[1, 2])
+        cam_data = params['cam']
+        cam2world_matrix = cam_data[:16].reshape(4, 4)
+        intrinsics = cam_data[16:25].reshape(3, 3)
+        fx = float(intrinsics[0, 0])
+        fy = float(intrinsics[1, 1])
+        cx = float(intrinsics[0, 2])
+        cy = float(intrinsics[1, 2])
 
-        cam2world_matrix = np.array(
-            [[1., 0., 0., 0.],
-             [0., 1., 0., 0.],
-             [0., 0., 1., -100.],
-             [0., 0., 0., 1.]], dtype=np.float32
-        )
         # focal_length = 2500
-        # print('fx, fy, cx, cy: ', fx, fy, cx, cy)
+        print('fx, fy, cx, cy: ', fx, fy, cx, cy)
         orig_img_size = 512
+
+        # intrinsics = np.array(
+        #     [[focal_length, 0.00000000e+00, cx],
+        #      [0.00000000e+00, focal_length, cy],
+        #      [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]
+        # )
+
         fx = 50
         fy = 50
-        cx = 0.5
-        cy = 0.5
 
         intrinsics = np.array(
             [[fx * orig_img_size, 0.00000000e+00, cx * orig_img_size],
-             [0.00000000e+00, fy * orig_img_size, cy * orig_img_size + 40],
+             [0.00000000e+00, fy * orig_img_size, cy * orig_img_size],
              [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]
         )
 
@@ -124,8 +125,15 @@ if __name__ == "__main__":
 
         print('cam2world_matrix', cam2world_matrix)
         print('intrinsics', intrinsics)
+        # load camera
+        print('betas', params["betas"])
+        print('body_pose', params["body_pose"])
+        print('scale', params["scale"])
+        print('global_orient', params["global_orient"])
+        print('transl', params["transl"])
 
         cam = (intrinsics, cam2world_matrix)
+
 
         # # load smpl mesh
         # mesh_path = os.path.join(root, '%05d_flipx.obj'%idx)
@@ -136,10 +144,8 @@ if __name__ == "__main__":
         smpl_outputs = body_model(betas=params["betas"],
                                   body_pose=params["body_pose"],
                                   global_orient=params["global_orient"],
-                                  # transl=params["transl"],
-                                  transl=torch.zeros(1, 3),
+                                  transl=params["transl"],
                                   scale=params["scale"] if "scale" in params.keys() else None)
-
         smpl_v = smpl_outputs['vertices'].clone().reshape(-1, 3)
         # print('smpl_v', smpl_v.shape)
         # print(body_model.faces.shape)
@@ -149,7 +155,7 @@ if __name__ == "__main__":
         img_path = os.path.join(root, file)
         img = Image.open(img_path)
         # img = img.crop((0, 0, 512, 512))
-        # img.save(os.path.join(save_dir, f'{file}'))
+        img.save(os.path.join(save_dir, f'{file}'))
 
         # # fill img with white
         # img = np.array(img)
@@ -163,3 +169,18 @@ if __name__ == "__main__":
         file_name = file.split('.')[-2]
         img_proj.save(os.path.join(save_dir, f'{file_name}_smpl.png'))
         print('save %s' % os.path.join(save_dir, f'{file_name}_smpl.png'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
